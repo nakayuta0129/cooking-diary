@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>料理日記</title>
+  <style>
+    body { font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 15px; background: #faf8f5; color: #333; }
+    h1 { text-align: center; color: #d97706; }
+    .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
+    input, textarea, button { width: 100%; margin-top: 8px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+    button { background: #d97706; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; }
+    .diary-item img { width: 100%; border-radius: 8px; margin-top: 10px; }
+    .diary-date { color: #888; font-size: 0.8em; }
+  </style>
+</head>
+<body>
+
+  <h1>🍳 料理日記</h1>
+
+  <div class="card">
+    <input type="file" id="photo" accept="image/*">
+    <input type="text" id="title" placeholder="料理名（例：ハンバーグ）">
+    <input type="date" id="date">
+    <textarea id="memo" placeholder="感想やメモ"></textarea>
+    <button onclick="saveDiary()">日記を保存する</button>
+  </div>
+
+  <div id="list"></div>
+
+  <script>
+    document.getElementById('date').valueAsDate = new Date();
+
+    function loadDiaries() {
+      const list = document.getElementById('list');
+      const items = JSON.parse(localStorage.getItem('cookingDiaries') || '[]');
+      list.innerHTML = items.map(item => `
+        <div class="card diary-item">
+          <div class="diary-date">${item.date}</div>
+          <h3>${item.title}</h3>
+          ${item.photo ? `<img src="${item.photo}">` : ''}
+          <p>${item.memo}</p>
+        </div>
+      `).reverse().join('');
+    }
+
+    function saveDiary() {
+      const photoFile = document.getElementById('photo').files[0];
+      const title = document.getElementById('title').value || '無題の料理';
+      const date = document.getElementById('date').value;
+      const memo = document.getElementById('memo').value;
+
+      const saveItem = (photoData) => {
+        const items = JSON.parse(localStorage.getItem('cookingDiaries') || '[]');
+        items.push({ title, date, memo, photo: photoData });
+        localStorage.setItem('cookingDiaries', JSON.stringify(items));
+        alert('保存しました！');
+        location.reload();
+      };
+
+      if (photoFile) {
+        const reader = new FileReader();
+        reader.onload = (e) => saveItem(e.target.result);
+        reader.readAsDataURL(photoFile);
+      } else {
+        saveItem('');
+      }
+    }
+
+    loadDiaries();
+  </script>
+</body>
+</html>
