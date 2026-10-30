@@ -44,6 +44,33 @@
       `).reverse().join('');
     }
 
+    // 画像を軽く圧縮する関数
+    function compressImage(file, callback) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 600; // 横幅を600pxに縮小
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          callback(canvas.toDataURL('image/jpeg', 0.6)); // 画質60%で軽量化
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
     function saveDiary() {
       const photoFile = document.getElementById('photo').files[0];
       const title = document.getElementById('title').value || '無題の料理';
@@ -51,17 +78,19 @@
       const memo = document.getElementById('memo').value;
 
       const saveItem = (photoData) => {
-        const items = JSON.parse(localStorage.getItem('cookingDiaries') || '[]');
-        items.push({ title, date, memo, photo: photoData });
-        localStorage.setItem('cookingDiaries', JSON.stringify(items));
-        alert('保存しました！');
-        location.reload();
+        try {
+          const items = JSON.parse(localStorage.getItem('cookingDiaries') || '[]');
+          items.push({ title, date, memo, photo: photoData });
+          localStorage.setItem('cookingDiaries', JSON.stringify(items));
+          alert('保存しました！');
+          location.reload();
+        } catch (e) {
+          alert('保存容量がいっぱいです。過去の日記を削除するか、テキストのみで保存してください。');
+        }
       };
 
       if (photoFile) {
-        const reader = new FileReader();
-        reader.onload = (e) => saveItem(e.target.result);
-        reader.readAsDataURL(photoFile);
+        compressImage(photoFile, saveItem);
       } else {
         saveItem('');
       }
